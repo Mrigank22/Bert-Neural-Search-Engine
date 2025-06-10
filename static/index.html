@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .top-k-input {
+            width: 80px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .top-k-input:focus {
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .results-container{
+            padding-left:20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .result-item {
+            padding: 25px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .result-item:hover {
+            background: #f8f9fa;
+            transform: translateX(10px);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-rank {
+            position: absolute;
+            top: 15px;
+            left: -10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .result-content {
+            margin-left: 30px;
+        }
+
+        .result-passage {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-scores {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .bm25-score {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .neural-score {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .score-bar {
+            width: 60px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .bm25-fill {
+            background: linear-gradient(90deg, #2196f3, #1565c0);
+        }
+
+        .neural-fill {
+            background: linear-gradient(90deg, #9c27b0, #7b1fa2);
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .stats {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                min-width: auto;
+            }
+            
+            .search-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .result-scores {
+                justify-content: center;
+            }
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #f6d55c 0%, #f5d02a 100%);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Neural Search Engine</h1>
+            <p>BERT-powered search with BM25 retrieval | Built on MS MARCO Dataset</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-form">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Enter your search query..." 
+                    autocomplete="off"
+                >
+                <input 
+                    type="number" 
+                    id="topKInput" 
+                    class="top-k-input" 
+                    value="10" 
+                    min="1" 
+                    max="50"
+                    title="Number of results to show"
+                >
+                <button id="searchBtn" class="search-btn">
+                    🔍 Search
+                </button>
+            </div>
+        </div>
+
+        <div id="searchInfo" class="search-info" style="display: none;">
+            <div class="search-meta">
+                <span id="queryText"></span>
+            </div>
+            <div class="search-meta">
+                <span id="searchTime"></span> | <span id="resultCount"></span>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Searching through passages...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="resultsContainer" class="results-container" style="display: none;"></div>
+
+        <div class="stats">
+            <p id="engineStats">Loading engine statistics...</p>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        
+        // Configuration - Update this URL to match your server
+        const SERVER_URL = 'http://localhost:8080';
+        
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const topKInput = document.getElementById('topKInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const searchInfo = document.getElementById('searchInfo');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const queryText = document.getElementById('queryText');
+        const searchTime = document.getElementById('searchTime');
+        const resultCount = document.getElementById('resultCount');
+        const engineStats = document.getElementById('engineStats');
+
+        // Event listeners
+        searchBtn.addEventListener('click', performSearch);
+        // Load engine stats on page load
+        loadEngineStats();
+
+        async function loadEngineStats() {
+            try {
+                const response = await fetch(`${SERVER_URL}/stats`);
+                const stats = await response.json();
+                engineStats.textContent = `${stats.total_passages?.toLocaleString() || 0} passages indexed | Running on ${stats.model_device || 'CPU'}`;
+            } catch (err) {
+                engineStats.textContent = 'Engine statistics unavailable - Check if server is running on port 8000';
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            const topK = parseInt(topKInput.value) || 10;
+
+            if (!query) {
+                showError('Please enter a search query');
+                return;
+            }
+
+            showLoading();
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch(`${SERVER_URL}/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: topK
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Search failed');
+                }
+
+                const data = await response.json();
+                hideLoading();
+                displayResults(data);
+
+            } catch (err) {
+                hideLoading();
+                showError(`Search failed: ${err.message}. Make sure the server is running on port 8000.`);
+                console.error('Search error:', err);
+            }
+        }
+
+        function displayResults(data) {
+            // Update search info
+            queryText.textContent = `Query: "${data.query}"`;
+            searchTime.textContent = `${(data.total_time * 1000).toFixed(0)}ms`;
+            resultCount.textContent = `${data.results.length} results`;
+            
+            searchInfo.style.display = 'flex';
+
+            // Clear and populate results
+            resultsContainer.innerHTML = '';
+            
+            if (data.results.length === 0) {
+                resultsContainer.innerHTML = '<div class="result-item">No results found for your query.</div>';
+            } else {
+                data.results.forEach(result => {
+                    const resultElement = createResultElement(result, data.query);
+                    resultsContainer.appendChild(resultElement);
+                });
+            }
+
+            resultsContainer.style.display = 'block';
+        }
+
+        function createResultElement(result, query) {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+
+            // Highlight query terms in passage
+            const highlightedPassage = highlightQueryTerms(result.passage, query);
+
+            // Normalize scores for visualization (0-1 range)
+            const maxBM25 = 50; // Approximate max BM25 score
+            const bm25Normalized = Math.min(Math.max(result.bm25_score / maxBM25, 0), 1);
+            
+            // Neural scores are typically in range -10 to 10, normalize to 0-1
+            const neuralNormalized = Math.min(Math.max((result.neural_score + 10) / 20, 0), 1);
+
+            div.innerHTML = `
+                <div class="result-rank">${result.rank}</div>
+                <div class="result-content">
+                    <div class="result-passage">${highlightedPassage}</div>
+                    <div class="result-scores">
+                        <div class="score-item bm25-score">
+                            BM25: ${result.bm25_score.toFixed(3)}
+                            <div class="score-bar">
+                                <div class="score-fill bm25-fill" style="width: ${bm25Normalized * 100}%"></div>
+                            </div>
+                        </div>
+                        <div class="score-item neural-score">
+                            Neural: ${result.neural_score.toFixed(3)}
+                            <div class="score-bar">
+                                <div class="score-fill neural-fill" style="width: ${neuralNormalized * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        function highlightQueryTerms(text, query) {
+            const terms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2);
+            let highlightedText = text;
+
+            terms.forEach(term => {
+                const regex = new RegExp(`\\b(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi');
+                highlightedText = highlightedText.replace(regex, '<span class="highlight">$1</span>');
+            });
+
+            return highlightedText;
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            searchBtn.disabled = false;
+            searchBtn.textContent = '🔍 Search';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            error.style.display = 'none';
+        }
+
+        function hideResults() {
+            resultsContainer.style.display = 'none';
+            searchInfo.style.display = 'none';
+        }
+
+        // Add some sample queries for inspiration
+        const sampleQueries = [
+            "What is machine learning?",
+            "How does neural networks work?",
+            "Benefits of artificial intelligence",
+            "Climate change effects",
+            "Best programming languages"
+        ];
+
+        // Placeholder rotation
+        let placeholderIndex = 0;
+        setInterval(() => {
+            if (document.activeElement !== searchInput) {
+                searchInput.placeholder = `Try: "${sampleQueries[placeholderIndex]}"`;
+                placeholderIndex = (placeholderIndex + 1) % sampleQueries.length;
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
