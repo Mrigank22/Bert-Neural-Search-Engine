@@ -73,54 +73,12 @@ Python 3.8+, PyTorch, transformers, rank-bm25, polars, scikit-learn, nltk, panda
 
 ## Usage
 
-### 1. Preprocessing
+### 1. Run the server 
 
 ```bash
-python preprocess.py --input data/raw --output data/processed
+uvicorn app:app --host 0.0.0.0 --port 8080 
 ```
-
-### 2. BM25 Indexing
-
-```bash
-python bm25_index.py --data data/processed
-```
-
-### 3. Train BERT Reranker
-
-```bash
-python train_reranker.py --train data/processed/train.csv --val data/processed/val.csv
-```
-
-### 4. Evaluation
-
-```bash
-python evaluate.py --model checkpoints/bert_reranker.pt --test data/processed/test.csv
-```
-
-### 5. Search Demo
-
-```bash
-python search.py --query "Your search query here"
-```
-
-## Project Structure
-
-```
-Bert-Neural-Search-Engine/
-│
-├── data/                   # Raw and processed datasets
-├── images/                 # Interface and result screenshots
-├── models/                 # Saved model checkpoints
-├── scripts/                # Pipeline scripts
-│   ├── preprocess.py
-│   ├── bm25_index.py
-│   ├── train_reranker.py
-│   ├── evaluate.py
-│   └── search.py
-├── utils/                  # Helper functions
-├── requirements.txt
-└── README.md
-```
+- You can visit the website on localhost:8080 in your browser
 
 ## Contributors
 
