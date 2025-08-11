@@ -82,9 +82,10 @@ uvicorn app:app --host 0.0.0.0 --port 8080
 
 ## Contributors
 
-- **Sandhya S** (BM25, dataset, analysis)
-- **Mrigank Pendyala** (BERT reranker, training, evaluation)
-- **Sharvani Pallempati** (Preprocessing, hyperparameter tuning)
+- **Sandhya S** (BM25, dataset, analysis)  
+- **Mrigank Pendyala** (Web interface, integration)  
+- **Sharvani Pallempati** (Preprocessing, hyperparameter tuning)  
+- **Sandhineni Mithil** (BERT reranker, training, evaluation)  
 
 ## Future Work
 
